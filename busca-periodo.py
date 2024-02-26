@@ -27,21 +27,23 @@ def build_path(subfolder):
     return folderpath
 
 
-def busca_documetos(**kwargs):
+def busca_documetos(
+    url='https://sip.sgb.gov.br/sip/login.php?sigla_orgao_sistema=CPRM&sigla_sistema=SEI&infra_url=L3NlaS8=', 
+    output_dir="extraidos",
+    charset="iso-8859-1",
+    passwordfile='.password/password.txt'
+):
     # nomes_arquivos = build_path('nomes_arquivos')
-    dir_extracted_html = build_path('extraidos')
+    _output_dir = build_path(output_dir)
 
     driver = webdriver.Chrome()
     driver.implicitly_wait(0.5)
-    url = 'https://sip.sgb.gov.br/sip/login.php?sigla_orgao_sistema=CPRM&sigla_sistema=SEI&infra_url=L3NlaS8='
     driver.get(url)
 
     # login page
     username_fld = driver.find_element("xpath", '//*[@id="txtUsuario"]')
     password_fld = driver.find_element("xpath", '//*[@id="pwdSenha"]')
     submit_button = driver.find_element("xpath", '//*[@id="sbmLogin"]')
-
-    passwordfile = '.password/password.txt'
 
     if not os.path.exists(passwordfile):
         message = "O arquivo de autenticação não existe. Colocar em .password/password.txt"
@@ -107,10 +109,11 @@ def busca_documetos(**kwargs):
             driver.switch_to.new_window('tab')
             driver.get(url)
             
-            html_extracted = os.path.join(dir_extracted_html, f'documento_{documento}.html')
+            out_html = build_path(os.path.join(_output_dir, "html"))
+            html_extracted = os.path.join(out_html, f'documento_{documento}.html')
             
             # TODO: Procurar uma forma do selenium entregar o charset da página
-            with open(html_extracted, 'w', encoding='utf-8') as file:
+            with open(html_extracted, 'w', encoding=charset) as file:
                 file.write(driver.page_source)
             
             list_documents.append(
@@ -154,7 +157,10 @@ def busca_documetos(**kwargs):
     driver.close()
     driver.quit()
     
-    return documentos
+    out_csv = os.path.join(_output_dir, "processos.csv")
+    pd.DataFrame(documentos).to_csv(out_csv, index=False)
+    
+    return out_csv
     
 
     ############################################################# 
