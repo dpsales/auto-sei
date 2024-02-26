@@ -118,7 +118,7 @@ def busca_documetos(
                 file.write(driver.page_source)
             
             list_documents.append(
-                {'processo': processo, 'documento': documento, 'url': url, "extraido": html_extracted}
+                {'processo': processo, 'documento': documento, 'url': url, "extraido": html_extracted, "charset": charset}
             )
             
             driver.close()
@@ -175,8 +175,9 @@ def parse_csv_results(csvfile):
         
         for row in reader:
             extraido = row["extraido"]
+            charset = row["charset"]
             
-            with open(extraido, encoding="iso-8859-1") as f: 
+            with open(extraido, encoding=charset) as f: 
                 soup = BeautifulSoup(f.read(), "html.parser") 
         
             tags = [tag for tag in soup.find("div", id="conteudo").children if len(tag.text.strip()) > 0 and not re.match(r"^\d+\.", tag.text.strip())] 
@@ -200,7 +201,7 @@ def parse_csv_results(csvfile):
             ) 
             lista_df.append(df)
             
-    return lista_df
+    return pd.concat(lista_df)
 
 
 # Função de entrada
