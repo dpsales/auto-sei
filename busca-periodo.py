@@ -3,27 +3,31 @@
 #########################################################################
 
 import os
-import time
 import re
 import pandas as pd
+import logging
+import sys
 
 from collections import OrderedDict
-from datetime import datetime
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 
 
-def main(**kwargs):
-    def build_path(subfolder):
-        current_folder = os.getcwd()
-        folderpath = os.path.join(current_folder, subfolder)
-        folderpath = os.path.abspath(folderpath)
-        if not os.path.exists(folderpath): os.makedirs(folderpath)
-        return folderpath
+logging.basicConfig(level=logging.INFO)
 
+def build_path(subfolder):
+    current_folder = os.getcwd()
+    folderpath = os.path.join(current_folder, subfolder)
+    folderpath = os.path.abspath(folderpath)
+    if not os.path.exists(folderpath): os.makedirs(folderpath)
+    return folderpath
+
+
+def busca_documetos(**kwargs):
     # nomes_arquivos = build_path('nomes_arquivos')
     dir_extracted_html = build_path('extraidos')
 
@@ -33,7 +37,6 @@ def main(**kwargs):
     driver.get(url)
 
     # login page
-
     username_fld = driver.find_element("xpath", '//*[@id="txtUsuario"]')
     password_fld = driver.find_element("xpath", '//*[@id="pwdSenha"]')
     submit_button = driver.find_element("xpath", '//*[@id="sbmLogin"]')
@@ -41,7 +44,9 @@ def main(**kwargs):
     passwordfile = '.password/password.txt'
 
     if not os.path.exists(passwordfile):
-        raise Exception("O arquivo de autenticação não existe. Colocar em .password/password.txt")
+        message = "O arquivo de autenticação não existe. Colocar em .password/password.txt"
+        logging.exception(message)
+        raise Exception(message)
 
     with open(passwordfile) as f:
         _username, _password = f.read().strip().split(":", maxsplit=1)
@@ -49,13 +54,15 @@ def main(**kwargs):
         password_fld.send_keys(_password)
         
     submit_button.click()
-
+    del _password
+    logging.info(f"Autenticando como {_username}")
 
     # home page (Chamar o item de menu de pesquisa)
     searching = driver.find_element("xpath", '//*[@id="main-menu"]/li[5]/a')
     searching.click()
 
     # search page - Selecionando os widgets a serem preenchidos
+    logging.info(f"Preenchendo o formulário de pesquisa")
     
     # Combo tipo de documento
     # TODO: Transformar esta opçao em argumento
@@ -69,16 +76,24 @@ def main(**kwargs):
     # Buscar
     driver.find_element("xpath", '//*[@id="sbmPesquisar"]').click()
 
-    #################################################
+    # TODO: capturar na página de pesquisa a quantidade de documentos achados
+    
     # getting files
-
-    def get_files():        
+    def get_files():       
         list_documents = []
         original_window = driver.current_window_handle 
-        page_docs_search = driver.find_element("xpath", '//*[@id="conteudo"]')
         
+        try:     
+            page_docs_search = driver.find_element("xpath", '//*[@id="conteudo"]')
+                        
+            wait = WebDriverWait(driver, timeout=20)
+            wait.until(lambda d : page_docs_search.is_displayed())
+            
+        except NoSuchElementException:
+            logging.warn("Não tem resultados de pesquisa")
+            sys.exit(-1)
+           
         elements = page_docs_search.find_elements("xpath", 'table/tbody/tr[1]')
-        x = [e.text for e in elements]
         
         for element in elements:
             pr_elemento = element.find_element("xpath", 'td[1]')
@@ -106,33 +121,41 @@ def main(**kwargs):
             driver.switch_to.window(original_window)
         
         return list_documents
-       
-            
+
+    # pagination
+    documentos = get_files()        
     
-
-    #################################################
-
-    # pagination 
-
-    pages = driver.find_element(by=By.CLASS_NAME, value="paginas")
-    list_pages = pages.text.split(' ')[:-1]
-
-    docs = get_files()
-
-    for i in range(1, len(list_pages)):
-        
+    while True:
         try:
-            next_page = driver.find_element("xpath", '//*[@id="conteudo"]/div[2]/a[%s]' %i)
-            next_page.click()
-            time.sleep(6)
-            docs = docs + get_files()
-        except (NameError, TypeError):
-            pass
-        time.sleep(6)  
+            paginas_tag = driver.find_element(by=By.CLASS_NAME, value="paginas")
+            
+            proxima_pagina = paginas_tag.find_element("xpath", "span[last()]/a[@href]") 
+            if not proxima_pagina.text.lower().strip().startswith("p"):
+                logging.info(f"Paginação concluída.")
+                break
+            
+            link = proxima_pagina.get_attribute('href')
+            proxima_pagina.click()
+            logging.info(f"Evento de click disparado: {link}") 
+            
+            documentos = documentos + get_files()
+            
+        except NoSuchElementException:
+            logging.warn("A paginação acabou")
+            break
         
+        except StaleElementReferenceException:
+            pass
+            
+        except Exception as e:
+            logging.exception(f"Erro não esperado: {e}")
+            sys.exit(-1)        
 
     driver.close()
     driver.quit()
+    
+    return documentos
+    
 
     ############################################################# 
     # para ler todos os arquivos em html e criar um DataFrame 
@@ -170,6 +193,11 @@ def main(**kwargs):
                 .apply(lambda x: x.replace("Sim", True).replace("Não", False))         
         ) 
         lista_df.append(df)
+
+
+# Função de entrada
+def main(*args, **kwargs):
+    docs = busca_documetos()
         
 if __name__ == '__main__':
     main()
