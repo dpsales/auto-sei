@@ -3,6 +3,7 @@
 #########################################################################
 
 import os
+import csv
 import re
 import pandas as pd
 import logging
@@ -163,47 +164,50 @@ def busca_documetos(
     return out_csv
     
 
-    ############################################################# 
-    # para ler todos os arquivos em html e criar um DataFrame 
-    ############################################################# 
-    
-    arquivo = os.listdir('arquivos') 
-    fname = [f'arquivos/{arq}' for arq in arquivo if arq.endswith(".html")] 
-    
-    
-    lista_df=[] 
-    
-    for i in fname: 
-    
-        with open(i, "r", encoding="iso-8859-1") as f: 
-            soup = BeautifulSoup(f.read(), "html.parser") 
-    
-        tags = [tag for tag in soup.find("div", id="conteudo").children if len(tag.text.strip()) > 0 and not re.match(r"^\d+\.", tag.text.strip())] 
-        # Cada HTML, um dicionário ordenado 
-        dict_series = OrderedDict() 
-    
-        for index in range(len(tags)): 
-            tag = tags[index] 
+############################################################# 
+# para ler todos os arquivos em html e criar um DataFrame 
+############################################################# 
+def parse_csv_results(csvfile):
+    with open(csvfile) as _csvfile:
+        lista_df=[] 
+        
+        reader = csv.DictReader(_csvfile)
+        
+        for row in reader:
+            extraido = row["extraido"]
             
-            if tag.name == "b": 
-                key = tag.text.strip().rstrip(":") 
-                value = tags[index + 1].text.strip() 
+            with open(extraido, encoding="iso-8859-1") as f: 
+                soup = BeautifulSoup(f.read(), "html.parser") 
+        
+            tags = [tag for tag in soup.find("div", id="conteudo").children if len(tag.text.strip()) > 0 and not re.match(r"^\d+\.", tag.text.strip())] 
+            # Cada HTML, um dicionário ordenado 
+            dict_series = OrderedDict() 
+        
+            for index in range(len(tags)): 
+                tag = tags[index] 
                 
-                dict_series[key] = value 
-    
-    
-        # Empilhar todos os dicionários para criar o df e interpretar os dtypes 
-        df = ( 
-            pd.DataFrame([dict_series]) 
-                .apply(lambda x: pd.to_numeric(x.str.replace(",", "."), errors="ignore")) 
-                .apply(lambda x: x.replace("Sim", True).replace("Não", False))         
-        ) 
-        lista_df.append(df)
+                if tag.name == "b": 
+                    key = tag.text.strip().rstrip(":") 
+                    value = tags[index + 1].text.strip() 
+                    
+                    dict_series[key] = value         
+        
+            # Empilhar todos os dicionários para criar o df e interpretar os dtypes 
+            df = ( 
+                pd.DataFrame([dict_series]) 
+                    .apply(lambda x: pd.to_numeric(x.str.replace(",", "."), errors="ignore")) 
+                    .apply(lambda x: x.replace("Sim", True).replace("Não", False))         
+            ) 
+            lista_df.append(df)
+            
+    return lista_df
 
 
 # Função de entrada
 def main(*args, **kwargs):
-    docs = busca_documetos()
+    # docs = busca_documetos()
+    teste = parse_csv_results("extraidos/processos.csv")
+    
         
 if __name__ == '__main__':
     main()
