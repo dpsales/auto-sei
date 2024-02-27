@@ -207,7 +207,7 @@ def parse_csv_results(csvfile):
 # Função de entrada
 def main(*args, **kwargs):
     # docs = busca_documetos()
-    teste = parse_csv_results("extraidos/processos.csv")
+    teste = parse_csv_results("temp/raspaidinhas.csv")
     
         
 if __name__ == '__main__':
