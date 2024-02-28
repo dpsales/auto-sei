@@ -32,8 +32,7 @@ def build_path(subfolder):
 def busca_documetos(
     url='https://sip.sgb.gov.br/sip/login.php?sigla_orgao_sistema=CPRM&sigla_sistema=SEI&infra_url=L3NlaS8=', 
     doc_type = "REMA - Empréstimo de Materiais ou Ex. Geológicos",
-    start_date = None,
-    end_date = None,
+    period = None,  # (start_date, end_date)
     output_dir="extraidos",
     charset="iso-8859-1",
     passwordfile='.password/password.txt'
@@ -81,6 +80,32 @@ def busca_documetos(
     
     # Buscar
     driver.find_element("xpath", '//*[@id="sbmPesquisar"]').click()
+    
+    # Wait
+    driver.implicitly_wait(0.5)
+    
+    # Manipulação de Período
+    if period:
+        start_date, end_date = period
+    
+        if start_date:
+            if not end_date:
+                logging.warn("Não foi passado end_date: end_date será considerado a data de hoje")
+                end_date = date.today()        
+            else:
+                if start_date >= end_date:
+                    message = "A data de início e fim da pesquisa não pode ser menor ou igual"
+                    logging.error(message)
+                    raise Exception(message)            
+        else:
+            logging.warn("Não foi passado start_date: ignorando end_date, caso informado")
+            end_date = None
+        
+        date_mask = r"%d/%m/%Y"        
+        
+        driver.implicitly_wait(0.5)
+        driver.find_element("xpath", '//*[@id="txtDataInicio"]').send_keys(start_date.strftime(date_mask))
+        driver.find_element("xpath", '//*[@id="txtDataFim"]').send_keys(end_date.strftime(date_mask))
 
     # TODO: capturar na página de pesquisa a quantidade de documentos achados
     
