@@ -29,7 +29,7 @@ def build_path(subfolder):
     return folderpath
 
 
-def busca_documetos(
+def busca_documentos(
     url='https://sip.sgb.gov.br/sip/login.php?sigla_orgao_sistema=CPRM&sigla_sistema=SEI&infra_url=L3NlaS8=', 
     doc_type = "REMA - Empréstimo de Materiais ou Ex. Geológicos",
     period = None,  # (start_date, end_date)
@@ -234,7 +234,7 @@ def parse_csv_results(csvfile):
 
 # Função de entrada
 def main(*args, **kwargs):
-    # docs = busca_documetos()
+    # docs = busca_documentos()
     teste = parse_csv_results("temp/raspaidinhas.csv")
     
         
