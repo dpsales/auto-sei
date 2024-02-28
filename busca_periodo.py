@@ -31,7 +31,7 @@ def build_path(subfolder):
 
 def busca_documentos(
     url='https://sip.sgb.gov.br/sip/login.php?sigla_orgao_sistema=CPRM&sigla_sistema=SEI&infra_url=L3NlaS8=', 
-    doc_type = "REMA - Empréstimo de Materiais ou Ex. Geológicos",
+    doc_type = "REMA - Empréstimo de Materiais ou Ex. Geológicos", #tipo de documento
     period = None,  # (start_date, end_date)
     output_dir="extraidos",
     charset="iso-8859-1",
