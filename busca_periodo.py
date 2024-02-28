@@ -10,6 +10,7 @@ import logging
 import sys
 
 from collections import OrderedDict
+from datetime import date
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -30,6 +31,9 @@ def build_path(subfolder):
 
 def busca_documetos(
     url='https://sip.sgb.gov.br/sip/login.php?sigla_orgao_sistema=CPRM&sigla_sistema=SEI&infra_url=L3NlaS8=', 
+    doc_type = "REMA - Empréstimo de Materiais ou Ex. Geológicos",
+    start_date = None,
+    end_date = None,
     output_dir="extraidos",
     charset="iso-8859-1",
     passwordfile='.password/password.txt'
@@ -69,8 +73,7 @@ def busca_documetos(
     
     # Combo tipo de documento
     # TODO: Transformar esta opçao em argumento
-    doc_type = driver.find_element("xpath", '//*[@id="selSeriePesquisa"]')
-    doc_type.send_keys('REMA - Empréstimo de Materiais ou Ex. Geológicos')
+    driver.find_element("xpath", '//*[@id="selSeriePesquisa"]').send_keys(doc_type)
     
     # Radio Data Documento - Período Explícito
     # TODO: Adicionar período de pesquisa como parâmetro
