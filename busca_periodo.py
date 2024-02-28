@@ -234,8 +234,10 @@ def parse_csv_results(csvfile):
 
 # Função de entrada
 def main(*args, **kwargs):
-    # docs = busca_documentos()
-    teste = parse_csv_results("temp/raspaidinhas.csv")
+    docs = busca_documentos()
+    results = parse_csv_results(docs)
+    
+    print(results)
     
         
 if __name__ == '__main__':
