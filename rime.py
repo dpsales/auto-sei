@@ -29,10 +29,10 @@ def build_path(subfolder):
     return folderpath
 
 
-def busca_documentos(
+def busca_rime(
     url='https://sip.sgb.gov.br/sip/login.php?sigla_orgao_sistema=CPRM&sigla_sistema=SEI&infra_url=L3NlaS8=', 
-    # TO DO: selecionar o tipo
-    doc_type = "REMA - Empréstimo de Materiais ou Ex. Geológicos", #tipo de documento
+    #To DO: selecionar da lista de documento
+    doc_type = "RIME - Incorporação de Materiais ou Ex. Geológicos", #tipo de documento
     period = None,  # (start_date, end_date)
     output_dir="extraidos",
     charset="iso-8859-1",
@@ -191,51 +191,11 @@ def busca_documentos(
     pd.DataFrame(documentos).to_csv(out_csv, index=False)
     
     return out_csv
-    
-
-############################################################# 
-# para ler todos os arquivos em html e criar um DataFrame 
-############################################################# 
-def parse_csv_results(csvfile):
-    with open(csvfile) as _csvfile:
-        lista_df=[] 
-        
-        reader = csv.DictReader(_csvfile)
-        
-        for row in reader:
-            extraido = row["extraido"]
-            charset = row["charset"]
-            
-            with open(extraido, encoding=charset) as f: 
-                soup = BeautifulSoup(f.read(), "html.parser") 
-        
-            tags = [tag for tag in soup.find("div", id="conteudo").children if len(tag.text.strip()) > 0 and not re.match(r"^\d+\.", tag.text.strip())] 
-            # Cada HTML, um dicionário ordenado 
-            dict_series = OrderedDict() 
-        
-            for index in range(len(tags)): 
-                tag = tags[index] 
-                
-                if tag.name == "b": 
-                    key = tag.text.strip().rstrip(":") 
-                    value = tags[index + 1].text.strip() 
-                    
-                    dict_series[key] = value         
-        
-            # Empilhar todos os dicionários para criar o df e interpretar os dtypes 
-            df = ( 
-                pd.DataFrame([dict_series]) 
-                    .apply(lambda x: pd.to_numeric(x.str.replace(",", "."), errors="ignore")) 
-                    .apply(lambda x: x.replace("Sim", True).replace("Não", False))         
-            ) 
-            lista_df.append(df)
-            
-    return pd.concat(lista_df)
 
 
 # Função de entrada
 def main(*args, **kwargs):
-    docs = busca_documentos()
+    docs = busca_rime()
     results = parse_csv_results(docs)
     
     print(results)
@@ -243,3 +203,4 @@ def main(*args, **kwargs):
         
 if __name__ == '__main__':
     main()
+    

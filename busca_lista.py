@@ -29,9 +29,15 @@ def build_path(subfolder):
     return folderpath
 
 
+
+
+
+
 def busca_documentos(
+    # TO DO: entrar com o endereço SEI 
     url='https://sip.sgb.gov.br/sip/login.php?sigla_orgao_sistema=CPRM&sigla_sistema=SEI&infra_url=L3NlaS8=', 
     # TO DO: selecionar o tipo
+    #separa a lista de documentos
     doc_type = "REMA - Empréstimo de Materiais ou Ex. Geológicos", #tipo de documento
     period = None,  # (start_date, end_date)
     output_dir="extraidos",
@@ -73,6 +79,18 @@ def busca_documentos(
     
     # Combo tipo de documento
     # TODO: Transformar esta opçao em argumento
+    
+    def documento_type():
+        l_documentos = (driver.find_element("xpath", '//*[@id="divSeriePesquisa"]').text())
+        
+        for documento in l_documentos: 
+            print(documento)
+            if documento.text == selecao:
+                return doc_type 
+
+        return doc_type
+        
+    
     driver.find_element("xpath", '//*[@id="selSeriePesquisa"]').send_keys(doc_type)
     
     # Radio Data Documento - Período Explícito
