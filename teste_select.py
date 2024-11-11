@@ -1,4 +1,4 @@
-#########################################################################
+########################################################################
 # busca todos os arquivos período explícito sem especificar a data
 #########################################################################
 
@@ -35,10 +35,10 @@ def build_path(subfolder):
 
 def busca_documentos(
     # TO DO: entrar com o endereço SEI 
-    url='https://sip.sgb.gov.br/sip/login.php?sigla_orgao_sistema=CPRM&sigla_sistema=SEI&infra_url=L3NlaS8=', 
+    url, 
     # TO DO: selecionar o tipo
     #separa a lista de documentos
-    doc_type = "REMA - Empréstimo de Materiais ou Ex. Geológicos", #tipo de documento
+    doc_type, #tipo de documento
     period = None,  # (start_date, end_date)
     output_dir="extraidos",
     charset="iso-8859-1",
@@ -252,12 +252,51 @@ def parse_csv_results(csvfile):
 
 
 # Função de entrada
-def main(*args, **kwargs):
-    docs = busca_documentos()
+# def main(*args, **kwargs):
+#     docs = busca_documentos()
+#     results = parse_csv_results(docs)
+    
+#     print(results)
+
+ # TO DO: entrar com o endereço SEI 
+    # url='https://sip.sgb.gov.br/sip/login.php?sigla_orgao_sistema=CPRM&sigla_sistema=SEI&infra_url=L3NlaS8=', 
+    # # TO DO: selecionar o tipo
+    # #separa a lista de documentos
+    # doc_type = "REMA - Empréstimo de Materiais ou Ex. Geológicos", #tipo de documento
+    # period = None,  # (start_date, end_date)
+    # output_dir="extraidos",
+    # charset="iso-8859-1",
+    # passwordfile='.password/password.txt'
+    
+def main():
+    import argparse
+    from pathlib import Path
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("url", help="URL do SEI a ser pesquisado")
+    parser.add_argument("doc", help="Tipo do documento SEI")
+    parser.add_argument("salvar", help="Diretório para salvar os resultados", type=Path)
+    parser.add_argument("passwordfile", help="Arquivo com a senha do SEI, em ASCII", default='.password/password.txt')
+    parser.add_argument("-di", "--data-inicio", type=date, help="Data de início da pesquisa", dest="di")
+    parser.add_argument("-df", "--data-fim", help="Data de fim da pesquisa", dest="df")
+    parser.add_argument("--charset", help="codificação de caracteres", default="iso-8859-1")
+    
+    args = parser.parse_args()
+    
+    docs = busca_documentos(
+        url=args.url,
+        doc_type=args.doc,
+        period=(args.di or None, args.df or None),
+        output_dir=args.salvar,
+        charset=args.charset,
+        passwordfile=args.passwordfile
+    )
+    
     results = parse_csv_results(docs)
     
     print(results)
-    
         
 if __name__ == '__main__':
     main()
+
+
