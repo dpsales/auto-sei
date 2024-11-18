@@ -29,10 +29,6 @@ def build_path(subfolder):
     return folderpath
 
 
-
-
-
-
 def busca_documentos(
     # TO DO: entrar com o endereço SEI 
     url, 
@@ -267,6 +263,9 @@ def parse_csv_results(csvfile):
     # output_dir="extraidos",
     # charset="iso-8859-1",
     # passwordfile='.password/password.txt'
+
+def carregar_janela_principal():
+    pass
     
 def main():
     import argparse
@@ -281,20 +280,26 @@ def main():
     parser.add_argument("-df", "--data-fim", help="Data de fim da pesquisa", dest="df")
     parser.add_argument("--charset", help="codificação de caracteres", default="iso-8859-1")
     
+    parser.add_argument("--gui", help="Carregar em modo janela. Caso esta opção for fornecida, todas as demais serão ignoradas", action="store_true", dest="gui")
+    
     args = parser.parse_args()
     
-    docs = busca_documentos(
-        url=args.url,
-        doc_type=args.doc,
-        period=(args.di or None, args.df or None),
-        output_dir=args.salvar,
-        charset=args.charset,
-        passwordfile=args.passwordfile
-    )
+    if args.gui:
+        pass # Crregar a função de janela
     
-    results = parse_csv_results(docs)
-    
-    print(results)
+    else:    
+        docs = busca_documentos(
+            url=args.url,
+            doc_type=args.doc,
+            period=(args.di or None, args.df or None),
+            output_dir=args.salvar,
+            charset=args.charset,
+            passwordfile=args.passwordfile
+        )
+        
+        results = parse_csv_results(docs)
+        
+        print(results)
         
 if __name__ == '__main__':
     main()
