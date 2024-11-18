@@ -11,12 +11,16 @@ import sys
 
 from collections import OrderedDict
 from datetime import date
+from pathlib import Path
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+
+
+MODULE_DIR = Path(__file__).parent
 
 
 logging.basicConfig(level=logging.INFO)
@@ -268,28 +272,228 @@ def parse_csv_results(csvfile):
     # charset="iso-8859-1",
     # passwordfile='.password/password.txt'
 
-def carregar_janela_principal():
-    pass
+def carregar_janela_principal():    
+    import tkinter as tk
+    from tkinter import ttk   
+    from pathlib import Path
+    from tkcalendar import DateEntry
+f   rom ttkthemes import ThemedTk
+    
+    class CustomThread(Thread):    
+        def __init__(self, group=None, target=None, name=None,
+                    args=(), kwargs={}, Verbose=None):
+            Thread.__init__(self, group, target, name, args, kwargs)
+            self._return = None
+
+        def run(self):
+            if self._target is not None:
+                self._return = self._target(*self._args, **self._kwargs)
+                
+        def join(self, *args):
+            Thread.join(self, *args)
+            return self._return
+    
+    FONT = "Arial"
+
+    janela = tk.Tk()
+    janela.title("Tirando dados do SEI")
+    janela.geometry("900x600")
+    janela.config(bg="lightblue")
+    janela.resizable(False, False)
+    janela.iconbitmap(MODULE_DIR.joinpath("resources", "logo-sei.ico"))
+    janela.rowconfigure(0, weight=1)
+    janela.columnconfigure([5,5], weight=2)
+
+    img = tk.PhotoImage(
+        file=MODULE_DIR.joinpath("resources", "logo-sei.png"), 
+        width=300, 
+        height=200
+    )
+    
+    logo = tk.Label(janela, image=img, background="lightblue")
+
+    logo.grid(row=0, column= 0, padx=1, pady=3)
+
+    mensagem1 = tk.Label(
+        janela,
+        text="Busca de dados dos documentos SEI",
+        fg="gray",
+        bg ="lightblue",
+        font=(FONT, "20"),
+        width=80,
+        height=6
+    )
+
+    mensagem1.grid(
+        row=0, 
+        column= 1, 
+        columnspan=20, 
+        padx=1, 
+        pady=3
+    )
+
+    # criar o Entry
+    label_url = ttk.Label(
+        janela,
+        text="Url do sistema SEI",
+        font=FONT
+    )
+
+    label_url.grid(
+        row=2,
+        column= 0,
+        padx=10,
+        pady=5,
+        sticky="nsew"
+    )
+
+    entry_url = ttk.Entry(
+        janela,
+        width=35
+    )
+
+    entry_url.grid(
+        row=2,
+        column=1,
+        columnspan=8,
+        padx=10,
+        pady=5,
+        sticky="nsew"
+    )
+
+    label_doc_type = ttk.Label(
+        janela,
+        text="Qual é o tipo de documento que quer os dados?", 
+        font=FONT
+    )
+    
+    label_doc_type.grid(
+        row=3,
+        column=0,
+        padx=10,
+        pady=5,
+        sticky="nsew"
+    )
+
+    entry_doc_type = ttk.Entry(
+        janela, 
+        width=35
+    )
+
+    entry_doc_type.grid(
+        row=3,
+        column=1,
+        columnspan=8,
+        padx=10,
+        pady=5,
+        sticky="nsew"
+    )
+
+    # Estilo do botão
+    s = ttk.Style()
+    s.configure("big.TButton", fg='black', bg="darkgray", font = (FONT, 16))
+    
+    # manipulador de evento click
+    def schedule_check(t):
+        """
+        Schedule the execution of the `check_if_done()` function after
+        one second.
+        """
+        janela.after(1000, check_if_done, t)
+
+    def check_if_done(t):
+        # If the thread has finished, re-enable the button and show a message.
+        if not t.is_alive():
+            print(t.join())      
+            label_entrada.config(text="File successfully downloaded!")
+            botao_entrada.config(state="normal")
+        else:
+            # Otherwise check again after one second.
+            schedule_check(t)
+        
+    
+    def botao_entrada_click():
+        # Add label for waiting
+        label_entrada.config(text="Buscando dados no SEI...")
+        # Disable the button while downloading the file.
+        botao_entrada.config(state="disabled")        
+        
+        # Start the crawler in a new thread.
+        url = entry_url.get()
+        doc_type = entry_doc_type.get()
+        t = CustomThread(target=busca_documentos, args=(url, doc_type))
+        t.start()
+        # Start checking periodically if the thread has finished.
+        schedule_check(t)
+        
+
+    botao_entrada = ttk.Button(
+        janela,
+        text="Salvar as entradas",
+        style="big.TButton",
+        command=botao_entrada_click
+    )
+    
+    botao_entrada.grid(
+        row=4,
+        columnspan=7,
+        padx=10,
+        pady=5
+    )
+
+    # mostrar os dados para rodar o Script do SEI
+    label_entrada = ttk.Label(
+        janela,
+        text="",
+        font=(FONT, "10")
+    )
+
+    label_entrada.grid(
+        row=10,
+        column=0,
+        padx=10,
+        pady=5
+    )
+
+    # Mostrar a Janela 
+    janela.mainloop()
+    
     
 def main():
     import argparse
-    from pathlib import Path
     
-    parser = argparse.ArgumentParser()
-    parser.add_argument("url", help="URL do SEI a ser pesquisado")
-    parser.add_argument("doc", help="Tipo do documento SEI")
-    parser.add_argument("salvar", help="Diretório para salvar os resultados", type=Path)
-    parser.add_argument("passwordfile", help="Arquivo com a senha do SEI, em ASCII", default='.password/password.txt')
+    run_in_commandline = '--gui' not in sys.argv
+    
+    parser = argparse.ArgumentParser(
+        description="Programa para capturar dados do SEI"
+    )
+    
+    # argumentos obrigatórios para caso executar em linha de comando (gui = False)
+    parser.add_argument("--url", required=run_in_commandline, help="URL do SEI a ser pesquisado")
+    parser.add_argument("--doc", required=run_in_commandline, help="Tipo do documento SEI")
+    parser.add_argument("--salvar", required=run_in_commandline, help="Diretório para salvar os resultados", type=Path)
+    parser.add_argument("--passwordfile", required=run_in_commandline, help="Arquivo com a senha do SEI, em ASCII", default='.password/password.txt')
+    
+    # argumentos opcionais para linha de comando
     parser.add_argument("-di", "--data-inicio", type=date, help="Data de início da pesquisa", dest="di")
     parser.add_argument("-df", "--data-fim", help="Data de fim da pesquisa", dest="df")
     parser.add_argument("--charset", help="codificação de caracteres", default="iso-8859-1")
     
-    parser.add_argument("--gui", help="Carregar em modo janela. Caso esta opção for fornecida, todas as demais serão ignoradas", action="store_true", dest="gui")
+    # inicializar em MainWindow 
+    parser.add_argument(
+        "--gui", 
+        help="Carregar em modo janela. Caso esta opção for fornecida, todas as demais serão ignoradas", 
+        action="store_true", 
+        dest="gui",
+        required=False
+    )
     
+    # Início do tratamento dos argumentos
     args = parser.parse_args()
     
     if args.gui:
-        pass # Crregar a função de janela
+        carregar_janela_principal()
+        return 0
     
     else:    
         docs = busca_documentos(

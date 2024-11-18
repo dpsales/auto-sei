@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../saa_anp_site"
+		},
+		{
+			"path": "../ecac"
+		}
+	],
+	"settings": {}
+}
