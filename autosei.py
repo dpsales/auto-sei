@@ -39,7 +39,8 @@ def busca_documentos(
     # TO DO: selecionar o tipo
     #separa a lista de documentos
     doc_type, #tipo de documento
-    period = (start_date, end_date),
+    start_date,
+    end_date,
     output_dir="extraidos",
     charset="iso-8859-1",
     passwordfile=PASSWORD_FILE
@@ -104,27 +105,27 @@ def busca_documentos(
     driver.implicitly_wait(0.5)
     
     # Manipulação de Período
-    if period:
-        start_date, end_date = period
+    # if period:
+    #     start_date, end_date = period
     
-        if start_date:
-            if not end_date:
-                logging.warn("Não foi passado end_date: end_date será considerado a data de hoje")
-                end_date = date.today()        
-            else:
-                if start_date >= end_date:
-                    message = "A data de início e fim da pesquisa não pode ser menor ou igual"
-                    logging.error(message)
-                    raise Exception(message)            
-        else:
-            logging.warn("Não foi passado start_date: ignorando end_date, caso informado")
-            end_date = None
+    #     if start_date:
+    #         if not end_date:
+    #             logging.warn("Não foi passado end_date: end_date será considerado a data de hoje")
+    #             end_date = date.today()        
+    #         else:
+    #             if start_date >= end_date:
+    #                 message = "A data de início e fim da pesquisa não pode ser menor ou igual"
+    #                 logging.error(message)
+    #                 raise Exception(message)            
+    #     else:
+    #         logging.warn("Não foi passado start_date: ignorando end_date, caso informado")
+    #         end_date = None
         
-        date_mask = r"%d/%m/%Y"        
+    #     date_mask = r"%d/%m/%Y"        
         
-        driver.implicitly_wait(0.5)
-        driver.find_element("xpath", '//*[@id="txtDataInicio"]').send_keys(start_date.strftime(date_mask))
-        driver.find_element("xpath", '//*[@id="txtDataFim"]').send_keys(end_date.strftime(date_mask))
+    driver.implicitly_wait(0.5)
+    driver.find_element("xpath", '//*[@id="txtDataInicio"]').send_keys(start_date) #.strftime(date_mask)
+    driver.find_element("xpath", '//*[@id="txtDataFim"]').send_keys(end_date) #.strftime(date_mask)
 
     # TODO: capturar na página de pesquisa a quantidade de documentos achados
     
@@ -536,8 +537,8 @@ def main():
     parser.add_argument("--passwordfile", required=run_in_commandline, help="Arquivo com a senha do SEI, em ASCII", default=PASSWORD_FILE)
     
     # argumentos opcionais para linha de comando
-    parser.add_argument("-data_inicial", "--data-inicio", type=date, help="Data de início da pesquisa", dest="di")
-    parser.add_argument("-data_final", "--data-fim", help="Data de fim da pesquisa", dest="df")
+    parser.add_argument("-data_inicial", "--data-inicio", type=date, help="Data de início da pesquisa", dest="data_inicial")
+    parser.add_argument("-data_final", "--data-fim", help="Data de fim da pesquisa", dest="data_final")
     parser.add_argument("--charset", help="codificação de caracteres", default="iso-8859-1")
     
     # inicializar em MainWindow 
@@ -560,11 +561,12 @@ def main():
         docs = busca_documentos(
             url=args.url,
             doc_type=args.doc,
-            period=(args.data_inicial or None, args.data_final or None),
+            start_date = args.data_inicial,
+            end_date = args.data_final,
             output_dir=args.salvar,
             charset=args.charset,
             passwordfile=args.passwordfile
-        )
+            )
         
         results = parse_csv_results(docs)
         
