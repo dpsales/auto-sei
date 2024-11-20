@@ -39,7 +39,7 @@ def busca_documentos(
     # TO DO: selecionar o tipo
     #separa a lista de documentos
     doc_type, #tipo de documento
-    period = None,  # (start_date, end_date)
+    period = (start_date, end_date),
     output_dir="extraidos",
     charset="iso-8859-1",
     passwordfile=PASSWORD_FILE
@@ -251,29 +251,12 @@ def parse_csv_results(csvfile):
     return pd.concat(lista_df)
 
 
-# Função de entrada
-# def main(*args, **kwargs):
-#     docs = busca_documentos()
-#     results = parse_csv_results(docs)
-    
-#     print(results)
-
- # TO DO: entrar com o endereço SEI 
-    # url='https://sip.sgb.gov.br/sip/login.php?sigla_orgao_sistema=CPRM&sigla_sistema=SEI&infra_url=L3NlaS8=', 
-    # # TO DO: selecionar o tipo
-    # #separa a lista de documentos
-    # doc_type = "REMA - Empréstimo de Materiais ou Ex. Geológicos", #tipo de documento
-    # period = None,  # (start_date, end_date)
-    # output_dir="extraidos",
-    # charset="iso-8859-1",
-    # passwordfile='.password/password.txt'
-
 def carregar_janela_principal():    
     import tkinter as tk
     from tkinter import ttk   
     from pathlib import Path
     from tkcalendar import DateEntry
-    from ttkthemes import ThemedTk
+    # from ttkthemes import ThemedTk
     from threading import Thread
     
     class CustomThread(Thread):    
@@ -317,10 +300,10 @@ def carregar_janela_principal():
                 #fechar a janela de login
             janela2.destroy()
                                
-        botao_voltar = ttk.Button(janela2, text = 'Salvar o Login e a senha ', style="big.TButton", command = save_arq)
+        botao_voltar = ttk.Button(janela2, text = 'Enter ', style="big.TButton", command = save_arq)
         botao_voltar.grid(row = 2, column = 0, columnspan=2)
     
-    janela = ThemedTk(theme="adapta")
+    janela = tk.Tk()
     janela.title("Tirando dados do SEI")  
     
     # janela.geometry("900x600")
@@ -388,7 +371,7 @@ def carregar_janela_principal():
 
     entry_doc_type.grid(row=3,
                         column=1,
-                        # columnspan=8,
+                        columnspan=8,
                         padx=10,
                         pady=5,
                         sticky="nsew"
@@ -459,7 +442,7 @@ def carregar_janela_principal():
                             text = "Login",
                            #  font=(FONT, "12", "bold"),
                             style="big.TButton",
-                           command=abrir_segunda_janela
+                            command=abrir_segunda_janela
     )
     botao_login.grid(row=7,
                     columnspan=2,
@@ -492,11 +475,13 @@ def carregar_janela_principal():
         # Disable the button while downloading the file.
         botao_entrada.config(state="disabled")        
         
+        date_mask = r"%d/%m/%Y" 
+        
         # Start the crawler in a new thread.
         url = entry_url.get()
         doc_type = entry_doc_type.get()
-        data_inicial = entry_datainicial.get_date()
-        data_final = entry_datafinal.get_date()
+        data_inicial = entry_datainicial.get_date().strftime(date_mask)
+        data_final = entry_datafinal.get_date().strftime(date_mask)
         t = CustomThread(target=busca_documentos, args=(url, doc_type, data_inicial, data_final))
         t.start()
         # Start checking periodically if the thread has finished.
@@ -525,7 +510,7 @@ def carregar_janela_principal():
     )
 
     label_entrada.grid(
-        row=10,
+        row=15,
         column=0,
         padx=10,
         pady=5
@@ -551,8 +536,8 @@ def main():
     parser.add_argument("--passwordfile", required=run_in_commandline, help="Arquivo com a senha do SEI, em ASCII", default=PASSWORD_FILE)
     
     # argumentos opcionais para linha de comando
-    parser.add_argument("-di", "--data-inicio", type=date, help="Data de início da pesquisa", dest="di")
-    parser.add_argument("-df", "--data-fim", help="Data de fim da pesquisa", dest="df")
+    parser.add_argument("-data_inicial", "--data-inicio", type=date, help="Data de início da pesquisa", dest="di")
+    parser.add_argument("-data_final", "--data-fim", help="Data de fim da pesquisa", dest="df")
     parser.add_argument("--charset", help="codificação de caracteres", default="iso-8859-1")
     
     # inicializar em MainWindow 
@@ -575,7 +560,7 @@ def main():
         docs = busca_documentos(
             url=args.url,
             doc_type=args.doc,
-            period=(args.di or None, args.df or None),
+            period=(args.data_inicial or None, args.data_final or None),
             output_dir=args.salvar,
             charset=args.charset,
             passwordfile=args.passwordfile

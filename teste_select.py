@@ -29,17 +29,13 @@ def build_path(subfolder):
     return folderpath
 
 
-
-
-
-
 def busca_documentos(
     # TO DO: entrar com o endereço SEI 
     url, 
     # TO DO: selecionar o tipo
     #separa a lista de documentos
     doc_type, #tipo de documento
-    period = None,  # (start_date, end_date)
+    period = (start_date, end_date), #None,  # (start_date, end_date)
     output_dir="extraidos",
     charset="iso-8859-1",
     passwordfile='.password/password.txt'
@@ -280,9 +276,9 @@ def main():
     parser.add_argument("doc", help="Tipo do documento SEI")
     parser.add_argument("salvar", help="Diretório para salvar os resultados", type=Path)
     parser.add_argument("passwordfile", help="Arquivo com a senha do SEI, em ASCII", default='.password/password.txt')
-    parser.add_argument("-di", "--data-inicio", type=date, help="Data de início da pesquisa", dest="di")
-    parser.add_argument("-df", "--data-fim", help="Data de fim da pesquisa", dest="df")
-    parser.add_argument("--charset", help="codificação de caracteres", default="iso-8859-1")
+    parser.add_argument("-di", "--data-inicio", type=date, help="Data de início da pesquisa", dest="start_date")
+    parser.add_argument("-df", "--data-fim", type=date, help="Data de fim da pesquisa", dest="end_date")
+    parser.add_argument("--charsetsgb.gov.br", help="codificação de caracteres", default="iso-8859-1")
     
     parser.add_argument("--gui", help="Carregar em modo janela. Caso esta opção for fornecida, todas as demais serão ignoradas", action="store_true", dest="gui")
     
@@ -295,7 +291,7 @@ def main():
         docs = busca_documentos(
             url=args.url,
             doc_type=args.doc,
-            period=(args.di or None, args.df or None),
+            period=(args.start_date or None, args.end_date or None),
             output_dir=args.salvar,
             charset=args.charset,
             passwordfile=args.passwordfile
