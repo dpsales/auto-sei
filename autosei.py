@@ -39,21 +39,14 @@ def busca_documentos(
     # TO DO: selecionar o tipo
     #separa a lista de documentos
     doc_type, #tipo de documento
-    #period = (start_date, end_date),
     start_date,
     end_date,
-    output_dir = "extraidos",
+    output_dir="extraidos",
     charset="iso-8859-1",
-    passwordfile = PASSWORD_FILE
+    passwordfile=PASSWORD_FILE
 ):
     # nomes_arquivos = build_path('nomes_arquivos')
     _output_dir = build_path(output_dir)
-
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
-
-    driver = webdriver.Chrome(options=options)
-
 
     driver = webdriver.Chrome()
     driver.implicitly_wait(0.5)
@@ -111,9 +104,9 @@ def busca_documentos(
     # Wait
     driver.implicitly_wait(0.5)
     
-    # # Manipulação de Período
-    # # if period:
-    # #     start_date, end_date = period
+    # Manipulação de Período
+    # if period:
+    #     start_date, end_date = period
     
     #     if start_date:
     #         if not end_date:
@@ -128,8 +121,8 @@ def busca_documentos(
     #         logging.warn("Não foi passado start_date: ignorando end_date, caso informado")
     #         end_date = None
         
-    date_mask = r"%d/%m/%Y"        
-
+    #     date_mask = r"%d/%m/%Y"        
+        
     driver.implicitly_wait(0.5)
     driver.find_element("xpath", '//*[@id="txtDataInicio"]').send_keys(start_date) #.strftime(date_mask)
     driver.find_element("xpath", '//*[@id="txtDataFim"]').send_keys(end_date) #.strftime(date_mask)
@@ -355,7 +348,7 @@ def carregar_janela_principal():
 
     entry_url.grid(row=2,
                 column=1,
-                columnspan=8,
+                columnspan=20,
                 padx=10,
                 pady=5,
                 sticky="nsew"
@@ -379,7 +372,7 @@ def carregar_janela_principal():
 
     entry_doc_type.grid(row=3,
                         column=1,
-                        columnspan=8,
+                        columnspan=20,
                         padx=10,
                         pady=5,
                         sticky="nsew"
@@ -467,11 +460,17 @@ def carregar_janela_principal():
         janela.after(1000, check_if_done, t)
 
     def check_if_done(t):
-        # If the thread has finished, re-enable the button and show a message.
+        # If the thread has finished, re-enable the butt
+        # on and show a message.
         if not t.is_alive():
             print(t.join())      
-            label_entrada.config(text="File successfully downloaded!")
+            label_entrada.config(text="\n Arquivos Baixados em \n \n /extraidos/html \n \n processos.csv",
+                                 background="lightblue",
+                                 
+                                 font=(FONT, 14, "bold")
+                                 )
             botao_entrada.config(state="normal")
+            janela.after(5000000,janela.destroy)
         else:
             # Otherwise check again after one second.
             schedule_check(t)
@@ -479,7 +478,9 @@ def carregar_janela_principal():
     
     def botao_entrada_click():
         # Add label for waiting
-        label_entrada.config(text="Buscando dados no SEI...")
+        label_entrada.config(text="Buscando dados no SEI...",
+                             font=(FONT, 14, "bold")
+                             )
         # Disable the button while downloading the file.
         botao_entrada.config(state="disabled")        
         
@@ -514,7 +515,7 @@ def carregar_janela_principal():
     label_entrada = ttk.Label(
         janela,
         text="",
-        font=(FONT, "10")
+        font=(FONT, "20")
     )
 
     label_entrada.grid(
@@ -568,13 +569,12 @@ def main():
         docs = busca_documentos(
             url=args.url,
             doc_type=args.doc,
-            # period=(args.data_inicial or None, args.data_final or None),
-            data_inicial = args.data_inicial,
-            data_final = args.data_final,
+            start_date = args.data_inicial,
+            end_date = args.data_final,
             output_dir=args.salvar,
             charset=args.charset,
             passwordfile=args.passwordfile
-        )
+            )
         
         results = parse_csv_results(docs)
         
